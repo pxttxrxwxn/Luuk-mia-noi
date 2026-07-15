@@ -5,15 +5,15 @@
 The purpose of this Software Design Specification (SDS) is to describe the architectural and detailed design of the "Luuk Mia Noi" driver assistance system. It serves as a blueprint for developers to implement the system.
 
 ### 1.2 Scope
-This document covers the structural design of the system, including the software modules, data flow, internal state management, and the technologies used (Python, OpenCV, YOLOv11). It details multiple core features: traffic light detection, front vehicle tracking, pedestrian crossing detection, traffic sign detection, and the driver dashboard.
+This document covers the structural design of the system, including the software modules, data flow, internal state management, and the technologies used (Python, OpenCV, YOLOv11n, YOLOv11n-cls). It details multiple core features: traffic light detection & state classification, front vehicle tracking, pedestrian crossing detection, traffic sign detection, and the web-based driver dashboard.
 
 ## 2. System Architecture
 ### 2.1 High-Level Architecture
 The system follows a pipeline architecture, where the video feed is processed frame-by-frame in real-time.
 - **Input Layer:** Captures real-time frames from the webcam.
-- **Processing Layer:** Runs YOLOv11 inference to detect objects (traffic lights, vehicles, pedestrians, and traffic signs).
-- **Logic Layer:** Analyzes the detected objects and handles specific feature logic (traffic light states, pedestrian crossing, traffic sign warnings).
-- **Output Layer:** Triggers audio alerts and updates the Graphical Dashboard.
+- **Processing Layer:** Runs YOLOv11n inference to detect objects, and YOLOv11n-cls to classify traffic light states (Red, Yellow, Green).
+- **Logic Layer:** Analyzes the detected objects, manages state machines, and handles specific feature logic (traffic light states, pedestrian crossing, traffic sign warnings) with safety-first priority.
+- **Output Layer:** Triggers asynchronous audio alerts and streams frame data/states to the Web Dashboard UI via WebSockets.
 
 ### 2.2 Data Flow
 ```text
@@ -39,12 +39,13 @@ The system follows a pipeline architecture, where the video feed is processed fr
 
 ### 3.2 Detection Module
 - **Responsibility:** Perform object detection on the provided frame to identify traffic lights, vehicles, pedestrians, and traffic signs.
-- **Technology:** Ultralytics YOLOv11 API.
+- **Technology:** Ultralytics YOLOv11n API (for detection) and YOLOv11n-cls API (specifically for traffic light color classification).
 - **Outputs:** List of detected objects with properties: `class_id`, `bounding_box` (x, y, w, h), and `confidence_score`.
-- **Sub-task (State Extraction):** Extract the region of interest (ROI) for the traffic light and determine its active color (Red or Green) using HSV color thresholding or a fine-tuned model classification.
+- **Sub-task (State Extraction):** For each detected traffic light, crop its bounding box from the frame and pass the cropped image to the YOLOv11n-cls classification model to determine its active state (Red, Yellow, or Green). This ensures robust classification under varying illumination.
 
 ### 3.3 Decision Logic Module (Feature Separation)
 - **Responsibility:** Maintain the state of the environment and trigger corresponding actions for each distinct feature.
+- **Priority Logic:** Conflicting alert states must be resolved hierarchically. Safety-critical alerts (e.g., pedestrian crossing) take absolute precedence over operational alerts (e.g., vehicle moving/green light "Go").
 
 The detailed design for each system feature has been separated into individual documents:
 - **[Traffic Light & Front Vehicle Tracking](SDS_Traffic_Light_Vehicle.md)**
@@ -53,8 +54,8 @@ The detailed design for each system feature has been separated into individual d
 
 ### 3.4 Audio Alert Module
 - **Responsibility:** Play a sound or voice notification to alert the user.
-- **Technology:** Libraries such as `pygame.mixer`, `playsound`, or `pyttsx3` (for Text-to-Speech).
-- **Inputs:** Trigger signal from the Decision Logic Module.
+- **Technology:** Multi-threaded or asynchronous playback using `pygame.mixer` or python's `threading` module to prevent voice alerts from blocking the main frame processing thread.
+- **Inputs:** Trigger signal and priority flag from the Decision Logic Module.
 
 ## 4. Interface Design
 ### 4.1 Dashboard UI (Graphical Interface)
@@ -67,5 +68,6 @@ The system features a comprehensive Dashboard UI to provide clear, real-time vis
 
 ## 5. Error Handling & Constraints
 - **Camera Disconnection:** The system should catch `VideoCapture` failures and attempt to reconnect or gracefully exit with an error message.
-- **Model Missing:** Validate the presence of YOLOv11 weights (e.g., `yolo11n.pt`) before starting the capture loop.
-- **Performance:** The frame processing time must not exceed 100ms (to maintain a minimum of 10 FPS) for the system to feel responsive.
+- **Model Missing:** Validate the presence of YOLOv11n weights (`yolo11n.pt`) and YOLOv11n-cls weights (`yolo11n-cls.pt`) before starting the capture loop.
+- **Performance & Latency:** The main frame processing loop must execute within 100ms (10+ FPS) to guarantee responsiveness. Multi-threading is mandatory for heavy tasks like web streaming and audio playback to meet this constraint.
+- **Lighting Constraints:** Color thresholding (HSV) is forbidden due to night-time/backlight susceptibility. The system must rely on YOLOv11n-cls classification for traffic light states.
