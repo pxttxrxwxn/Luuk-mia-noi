@@ -131,4 +131,5 @@ The system employs a real-time frame processing pipeline:
 
 *  **Audio Alerts**: Pygame (`pygame.mixer`), `playsound`, or Text-to-Speech (`pyttsx3`)
 
-*  **GUI / Dashboard**: Flask / FastAPI (Web)
+*  **Dashboard Frontend**: React 18+ (Vite) with Tailwind CSS 3+ (Glassmorphism UI)
+*  **Dashboard Backend**: Flask / FastAPI (WebSocket server)
