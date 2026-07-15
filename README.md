@@ -16,7 +16,7 @@
   
 
 
-| **Student ID** | **Name**               | 
+| **Student ID** | **Name**               |
 |-----------------|------------------------|
 |**67026506**| อภิวิชญ์ ทองย้อย |
 |**67022962**| อดิเทพ แก้วเอ      |
@@ -88,7 +88,6 @@ The system employs a real-time frame processing pipeline:
 
 *  **Logic**: Transitions through a state machine (`STATE_RED_LIGHT`, `STATE_GREEN_LIGHT`, `STATE_NO_LIGHT_TRACK_VEHICLE`) to alert the driver when it is safe to proceed.
 
-*  **Detailed Spec**: [doc/SDS_Traffic_Light_Vehicle.md](file:///D:/up/ปี3/Web_Application_Development/test_sds/Luuk mia noi/doc/SDS_Traffic_Light_Vehicle.md)
 
   
 
@@ -107,7 +106,6 @@ The system employs a real-time frame processing pipeline:
 
 *  **Logic**: Triggers preparation alerts like "Traffic light ahead, prepare to reduce speed" when the bounding box area increases past a specified threshold.
 
-*  **Detailed Spec**: [doc/SDS_Traffic_Sign.md](file:///D:/up/ปี3/Web_Application_Development/test_sds/Luuk mia noi/doc/SDS_Traffic_Sign.md)
 
   
 
@@ -133,4 +131,4 @@ The system employs a real-time frame processing pipeline:
 
 *  **Audio Alerts**: Pygame (`pygame.mixer`), `playsound`, or Text-to-Speech (`pyttsx3`)
 
-*  **GUI / Dashboard**: Flask / FastAPI (Web) or PyQt / Tkinter (Desktop)
+*  **GUI / Dashboard**: Flask / FastAPI (Web)
